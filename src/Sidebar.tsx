@@ -1,8 +1,12 @@
 import { SunIcon, MoonIcon } from "./icons";
 
-export type PageId = "inspect" | "compare" | "search";
+export type PageId = "inspect" | "compare" | "search" | "swagger";
 export type Theme = "dark" | "light";
 
+// The Swagger page ("swagger") is intentionally left out of this nav list — it's hidden from
+// the UI while more work is pending on it, but it stays a fully valid PageId and App.tsx still
+// routes to it, so the page itself is untouched and reachable again the moment it's added back
+// here.
 const NAV_ITEMS: { id: PageId; label: string; glyph: string }[] = [
   { id: "inspect", label: "Formatter", glyph: "{}" },
   { id: "compare", label: "Compare", glyph: "⇄" },

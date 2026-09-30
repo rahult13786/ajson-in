@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, type WheelEvent } from "react";
 import { buildEntityTree, computeGraphLayout, type LayoutBox } from "./graphLayout";
 import type { JsonValue } from "./jsonUtils";
 import { ImageDownloadIcon } from "./icons";
-import { exportNodeAsPng } from "./exportPng";
+import { exportGraphAsPng, type GraphExportTheme } from "./exportGraphCanvas";
 
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 2.5;
@@ -21,7 +21,7 @@ export default function GraphView({
   const [zoom, setZoom] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -53,21 +53,33 @@ export default function GraphView({
   }
 
   async function handleExportPng() {
-    if (!canvasRef.current) return;
     setExporting(true);
-    setExportError(false);
+    setExportError(null);
     try {
-      const bg = getComputedStyle(document.documentElement).getPropertyValue("--panel-alt").trim() || "#0d1017";
-      // Pass the layout's own (unscaled) dimensions rather than measuring the live DOM node:
-      // the node is currently rendered with a CSS `transform: scale(zoom)`, so its bounding
-      // rect reflects the current zoom level, not its true content size — using that rect
-      // while also resetting the clone's transform (needed for a crisp, unscaled export)
-      // produced a size mismatch that silently broke the export.
-      await exportNodeAsPng(canvasRef.current, "json-graph.png", bg || "#0d1017", canvasWidth, canvasHeight);
+      const style = getComputedStyle(document.documentElement);
+      const v = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback;
+      const theme: GraphExportTheme = {
+        panel: v("--panel", "#10141d"),
+        panelAlt: v("--panel-alt", "#0d1017"),
+        border: v("--border", "#232838"),
+        borderSoft: v("--border-soft", "#1a1f2c"),
+        accent: v("--accent", "#ffb454"),
+        accentDim: v("--accent-dim", "#b98342"),
+        blue: v("--blue", "#6cb6ff"),
+        green: v("--green", "#7ee787"),
+        purple: v("--purple", "#c9a8ff"),
+        textMuted: v("--text-muted", "#7c8496"),
+        textDim: v("--text-dim", "#4b5266"),
+        fontMono: "SFMono-Regular, Consolas, monospace", // web font may be unavailable to canvas; use its fallback stack
+      };
+      // Drawn directly onto a <canvas> from the layout data (no DOM screenshot, no image
+      // loading) — see exportGraphCanvas.ts for why that's more reliable across hosts.
+      await exportGraphAsPng(layout, "json-graph.png", theme.panelAlt, CANVAS_PADDING, theme);
     } catch (err) {
       console.error("Graph PNG export failed:", err);
-      setExportError(true);
-      setTimeout(() => setExportError(false), 3000);
+      const message = err instanceof Error ? err.message : "Export failed — see console";
+      setExportError(message);
+      setTimeout(() => setExportError((m) => (m === message ? null : m)), 8000);
     } finally {
       setExporting(false);
     }
@@ -94,7 +106,7 @@ export default function GraphView({
           <ImageDownloadIcon />
           {exporting ? "Exporting…" : "Export PNG"}
         </button>
-        {exportError && <span className="graph-export-error">Export failed — see console</span>}
+        {exportError && <span className="graph-export-error">{exportError}</span>}
         <span className="graph-entity-count">{layout.boxes.length} entities</span>
       </div>
 

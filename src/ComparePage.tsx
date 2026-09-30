@@ -3,6 +3,7 @@ import ResizableSplit from "./ResizableSplit";
 import { parsePayload } from "./payloadParser";
 import { buildCompareRows, buildDiffSummaryLines } from "./compareUtils";
 import CompareTree from "./CompareTree";
+import { FavoritesBrowserModal } from "./FavoritesModal";
 import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon, MaximizeIcon, MinimizeIcon } from "./icons";
 
 const JSON_SAMPLE_LEFT = `{
@@ -25,6 +26,7 @@ export default function ComparePage() {
   const [rightRaw, setRightRaw] = useState("");
   const [activeDiffPos, setActiveDiffPos] = useState<number | null>(null);
   const [resultFullscreen, setResultFullscreen] = useState(false);
+  const [showBrowseModal, setShowBrowseModal] = useState(false);
 
   const parsedLeft = useMemo(() => (leftRaw.trim() === "" ? null : parsePayload(leftRaw)), [leftRaw]);
   const parsedRight = useMemo(() => (rightRaw.trim() === "" ? null : parsePayload(rightRaw)), [rightRaw]);
@@ -94,6 +96,14 @@ export default function ComparePage() {
     setActiveDiffPos(null);
   }
 
+  // "My favorites" here only ever loads into the source (left) side — this page has no
+  // "save" action of its own, just browse-and-load, per the round-7 request.
+  function handleLoadFavorite(favRaw: string) {
+    setLeftRaw(favRaw);
+    setActiveDiffPos(null);
+    setShowBrowseModal(false);
+  }
+
   const leftKind = parsedLeft?.ok ? parsedLeft.kind : null;
   const rightKind = parsedRight?.ok ? parsedRight.kind : null;
 
@@ -101,9 +111,7 @@ export default function ComparePage() {
     <section className="pane pane-left">
       <div className="pane-header">
         <h2>Source (left)</h2>
-        <div className="toolbar">
-          {leftKind && <span className="kind-pill">{leftKind}</span>}
-        </div>
+        <div className="toolbar">{leftKind && <span className="kind-pill">{leftKind}</span>}</div>
       </div>
       <textarea
         className="input-area cmp-input"
@@ -219,6 +227,9 @@ export default function ComparePage() {
           <button className="btn" onClick={loadSample}>
             Load sample
           </button>
+          <button className="btn" onClick={() => setShowBrowseModal(true)}>
+            My favorites
+          </button>
           <button className="btn btn-ghost" onClick={handleClear} disabled={!leftRaw && !rightRaw}>
             Clear
           </button>
@@ -248,6 +259,10 @@ export default function ComparePage() {
           />
         )}
       </div>
+
+      {showBrowseModal && (
+        <FavoritesBrowserModal onClose={() => setShowBrowseModal(false)} onLoad={handleLoadFavorite} />
+      )}
     </>
   );
 }

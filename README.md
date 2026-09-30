@@ -116,4 +116,3 @@ preserving the `<?xml ...?>` declaration, the XML tree rendering real tags,
 the XML graph's root label, the Dexie favorites save/browse/evict flow, the
 Compare page's added vertical divider, and the Search page's row layout and
 corrected sub-filter semantics — not just `tsc -b`/`vite build` passing.
-# ajson-in

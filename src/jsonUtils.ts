@@ -29,6 +29,25 @@ export function tryParse(raw: string): ParseResult {
   }
 }
 
+/**
+ * Detects a "double-encoded" JSON payload — a JSON *string* whose own content is itself valid
+ * JSON (an object or array), e.g. pasting `"{\"id\":1}"` rather than `{"id":1}`. When that's
+ * what the top-level parsed value is, returns the inner payload pretty-printed; otherwise null.
+ * Used to auto-format the Formatter page's output side without requiring a button click.
+ */
+export function tryUnwrapJsonString(value: JsonValue): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const inner = JSON.parse(value);
+    if (inner !== null && typeof inner === "object") {
+      return JSON.stringify(inner, null, 2);
+    }
+  } catch {
+    // Not double-encoded JSON — an ordinary string value, nothing to unwrap.
+  }
+  return null;
+}
+
 export function isContainer(
   v: JsonValue
 ): v is JsonValue[] | { [key: string]: JsonValue } {

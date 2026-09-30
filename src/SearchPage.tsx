@@ -4,6 +4,7 @@ import { parsePayload } from "./payloadParser";
 import { collectKeyMatches, collectValueMatches, type KeyMatch, type ValueMatch } from "./jsonPositions";
 import { selectTextareaRange } from "./textNav";
 import { formatPathForKind, formatBytes, byteSize } from "./jsonUtils";
+import { FavoritesBrowserModal } from "./FavoritesModal";
 
 const SAMPLE = `{
   "id": "evt_3Nk29ALx",
@@ -53,6 +54,7 @@ export default function SearchPage() {
   const [valueRefine, setValueRefine] = useState("");
   const [activePath, setActivePath] = useState<string | null>(null);
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
+  const [showBrowseModal, setShowBrowseModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pressTimer = useRef<number | null>(null);
   const longPressFired = useRef(false);
@@ -143,6 +145,13 @@ export default function SearchPage() {
     setActivePath(null);
   }
 
+  // "My favorites" here only ever loads into the paste-payload (left) side.
+  function handleLoadFavorite(favRaw: string) {
+    setRaw(favRaw);
+    setActivePath(null);
+    setShowBrowseModal(false);
+  }
+
   const stats = useMemo(() => {
     const lines = raw === "" ? 0 : raw.split("\n").length;
     return { lines, bytes: byteSize(raw) };
@@ -154,14 +163,6 @@ export default function SearchPage() {
     <section className="pane pane-left">
       <div className="pane-header">
         <h2>Paste payload</h2>
-        <div className="toolbar">
-          <button className="btn" onClick={handleLoadSample}>
-            Load sample
-          </button>
-          <button className="btn btn-ghost" onClick={handleClear} disabled={!raw}>
-            Clear
-          </button>
-        </div>
       </div>
       <textarea
         ref={textareaRef}
@@ -274,6 +275,17 @@ export default function SearchPage() {
           {status === "valid" && `Valid ${parsed?.ok ? parsed.kind.toUpperCase() : ""}`}
           {status === "invalid" && "Invalid payload"}
         </div>
+        <div className="toolbar">
+          <button className="btn" onClick={handleLoadSample}>
+            Load sample
+          </button>
+          <button className="btn" onClick={() => setShowBrowseModal(true)}>
+            My favorites
+          </button>
+          <button className="btn btn-ghost" onClick={handleClear} disabled={!raw}>
+            Clear
+          </button>
+        </div>
         {status === "invalid" && parsed && !parsed.ok && (
           <span className="hint-text">
             {parsed.message} — line {parsed.line}, column {parsed.col}
@@ -281,6 +293,10 @@ export default function SearchPage() {
         )}
       </div>
       <ResizableSplit storageKey="search-row" direction="row" min={25} max={75} left={leftPanel} right={resultsPanel} />
+
+      {showBrowseModal && (
+        <FavoritesBrowserModal onClose={() => setShowBrowseModal(false)} onLoad={handleLoadFavorite} />
+      )}
     </>
   );
 }

@@ -4,6 +4,7 @@ import Sidebar, { type PageId, type Theme } from "./Sidebar";
 import InspectorPage from "./InspectorPage";
 import ComparePage from "./ComparePage";
 import SearchPage from "./SearchPage";
+import SwaggerPage from "./SwaggerPage";
 
 const THEME_KEY = "payload-inspector-theme";
 
@@ -30,6 +31,7 @@ export default function App() {
         {page === "inspect" && <InspectorPage />}
         {page === "compare" && <ComparePage />}
         {page === "search" && <SearchPage />}
+        {page === "swagger" && <SwaggerPage />}
       </main>
     </div>
   );

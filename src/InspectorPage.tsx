@@ -3,7 +3,14 @@ import JsonTree from "./JsonTree";
 import XmlTree from "./XmlTree";
 import GraphView from "./GraphView";
 import ResizableSplit from "./ResizableSplit";
-import { byteSize, formatBytes, collectContainerPaths, formatPathForKind, type JsonValue } from "./jsonUtils";
+import {
+  byteSize,
+  formatBytes,
+  collectContainerPaths,
+  formatPathForKind,
+  tryUnwrapJsonString,
+  type JsonValue,
+} from "./jsonUtils";
 import { parsePayload } from "./payloadParser";
 import { findNodeAtOffset, findNodeAtPath } from "./jsonPositions";
 import { selectTextareaRange } from "./textNav";
@@ -67,6 +74,7 @@ export default function InspectorPage() {
   const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(new Set());
   const [showFullPath, setShowFullPath] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("tree");
+  const [outputLabel, setOutputLabel] = useState("Format");
   const [activePath, setActivePath] = useState<string | null>(null);
   const [rightFullscreen, setRightFullscreen] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -80,8 +88,32 @@ export default function InspectorPage() {
     return parsePayload(raw);
   }, [raw]);
 
+  // When the input is a "double-encoded" JSON string — a JSON string literal whose own content
+  // is itself valid JSON, e.g. pasting `"{\"id\":1}"` instead of `{"id":1}` — every downstream
+  // feature (Format, Minify, Tree, Graph view, the path bar) should transparently operate on the
+  // *inner* payload instead of the literal one-line string, since that's what anyone pasting
+  // stringified JSON actually wants to work with. `effectiveParsed` is that inner payload,
+  // re-parsed so it gets its own real formatted/minified text and tree; when the input isn't
+  // double-encoded, it's simply `parsed` unchanged — "no special logic" for ordinary JSON/XML.
+  const isStringifiedInput = useMemo(
+    () => !!(parsed?.ok && parsed.kind === "json" && typeof parsed.value === "string" && tryUnwrapJsonString(parsed.value)),
+    [parsed]
+  );
+
+  const effectiveParsed = useMemo(() => {
+    if (!parsed?.ok || parsed.kind !== "json" || typeof parsed.value !== "string") return parsed;
+    const unwrapped = tryUnwrapJsonString(parsed.value);
+    if (!unwrapped) return parsed;
+    const inner = parsePayload(unwrapped);
+    return inner.ok ? inner : parsed;
+  }, [parsed]);
+
+  // Keep the output side in sync with whatever effectiveParsed currently is, defaulting to its
+  // formatted form (view mode is left alone — Tree already shows the right thing on its own).
   useEffect(() => {
-    if (parsed?.ok) setOutputText(parsed.formatted);
+    if (!effectiveParsed?.ok) return;
+    setOutputText(effectiveParsed.formatted);
+    setOutputLabel(isStringifiedInput ? "Format (auto-detected stringified JSON)" : "Format");
   }, [raw]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = useMemo(() => {
@@ -100,7 +132,7 @@ export default function InspectorPage() {
   }
 
   function handleCollapseAll() {
-    if (parsed?.ok) setCollapsedPaths(new Set(collectContainerPaths(parsed.value)));
+    if (effectiveParsed?.ok) setCollapsedPaths(new Set(collectContainerPaths(effectiveParsed.value)));
   }
 
   function handleExpandAll() {
@@ -111,18 +143,31 @@ export default function InspectorPage() {
    * Format only ever rewrites the result/output side, for both JSON and XML — it never touches
    * the input textarea. It also switches to the (button-less) "text" view so the result is
    * actually visible: Tree/Graph render parsed *structure*, not raw text, so without this the
-   * click would have no visible effect at all.
+   * click would have no visible effect at all. Uses `effectiveParsed`, so if the input is
+   * stringified JSON this formats the *inner* payload, not the literal one-line string.
    */
   function handleFormat() {
-    if (!parsed?.ok) return;
-    setOutputText(parsed.formatted);
+    if (!effectiveParsed?.ok) return;
+    setOutputText(effectiveParsed.formatted);
+    setOutputLabel(isStringifiedInput ? "Format (auto-detected stringified JSON)" : "Format");
     setViewMode("text");
   }
 
   /** Minify only ever rewrites the result/output side — for both JSON and XML — never the input. */
   function handleMinify() {
-    if (!parsed?.ok) return;
-    setOutputText(parsed.minified);
+    if (!effectiveParsed?.ok) return;
+    setOutputText(effectiveParsed.minified);
+    setOutputLabel(isStringifiedInput ? "Minify (auto-detected stringified JSON)" : "Minify");
+    setViewMode("text");
+  }
+
+  /** Wraps the minified payload as a single escaped JSON string literal — e.g. {"a":1} ->
+   *  "{\"a\":1}". Never touches the input. Disabled when the input is already stringified JSON,
+   *  since stringifying it again would just add another layer of escaping. */
+  function handleStringify() {
+    if (!effectiveParsed?.ok || isStringifiedInput) return;
+    setOutputText(JSON.stringify(effectiveParsed.minified));
+    setOutputLabel("Stringify");
     setViewMode("text");
   }
 
@@ -157,7 +202,7 @@ export default function InspectorPage() {
 
   function handleDownload() {
     if (!outputText) return;
-    const ext = parsed?.ok && parsed.kind === "xml" ? "xml" : "json";
+    const ext = effectiveParsed?.ok && effectiveParsed.kind === "xml" ? "xml" : "json";
     const mime = ext === "xml" ? "application/xml" : "application/json";
     const blob = new Blob([outputText], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -196,8 +241,12 @@ export default function InspectorPage() {
     e.target.value = "";
   }
 
+  // When the input is double-encoded JSON, the tree/graph on the right reflects the *inner*
+  // payload's own offsets, which don't correspond to any position in the raw outer string
+  // literal sitting in the textarea — so cursor/selection sync with the input is skipped in
+  // that case rather than mapping to the wrong characters.
   function handleTextareaCursor() {
-    if (!parsed?.ok || !textareaRef.current) return;
+    if (!parsed?.ok || !textareaRef.current || isStringifiedInput) return;
     const offset = textareaRef.current.selectionStart;
     const node = findNodeAtOffset(parsed.posRoot, offset);
     if (node) setActivePath(node.path);
@@ -205,7 +254,7 @@ export default function InspectorPage() {
 
   function handleSelectPathFromTree(path: string) {
     setActivePath(path);
-    if (!parsed?.ok || !textareaRef.current) return;
+    if (!parsed?.ok || !textareaRef.current || isStringifiedInput) return;
     const node = findNodeAtPath(parsed.posRoot, path);
     if (!node) return;
     const start = node.keyStart ?? node.valueStart;
@@ -216,7 +265,7 @@ export default function InspectorPage() {
   const kindLabel = parsed?.ok ? parsed.kind : null;
 
   const breadcrumb =
-    activePath && parsed?.ok ? formatPathForKind(activePath, parsed.kind, parsed.rootLabel) : null;
+    activePath && effectiveParsed?.ok ? formatPathForKind(activePath, effectiveParsed.kind, effectiveParsed.rootLabel) : null;
 
   const rightToolbar = (
     <div className="pane-header">
@@ -227,6 +276,14 @@ export default function InspectorPage() {
         </button>
         <button onClick={handleMinify} className="btn" disabled={status !== "valid"}>
           Minify
+        </button>
+        <button
+          onClick={handleStringify}
+          className="btn"
+          disabled={status !== "valid" || isStringifiedInput}
+          title={isStringifiedInput ? "Input is already stringified JSON" : "Wrap as an escaped JSON string"}
+        >
+          Stringify
         </button>
         <span className="toolbar-divider" />
         <div className="view-mode-group">
@@ -283,7 +340,7 @@ export default function InspectorPage() {
   const rightBody = (
     <>
       <div className="path-bar">
-        <span className="path-bar-label">{parsed?.ok && parsed.kind === "xml" ? "XML path" : "JSON path"}</span>
+        <span className="path-bar-label">{effectiveParsed?.ok && effectiveParsed.kind === "xml" ? "XML path" : "JSON path"}</span>
         {breadcrumb ? (
           breadcrumb.split(/(?=[.[])/).map((seg, i) => (
             <span key={i} className="path-bar-segment">
@@ -330,9 +387,9 @@ export default function InspectorPage() {
           </div>
         )}
 
-        {status === "valid" && parsed && parsed.ok && viewMode === "tree" && parsed.kind === "json" && (
+        {status === "valid" && effectiveParsed && effectiveParsed.ok && viewMode === "tree" && effectiveParsed.kind === "json" && (
           <JsonTree
-            data={parsed.value as JsonValue}
+            data={effectiveParsed.value as JsonValue}
             collapsedPaths={collapsedPaths}
             onToggle={handleToggleNode}
             showFullPath={showFullPath}
@@ -341,10 +398,10 @@ export default function InspectorPage() {
           />
         )}
 
-        {status === "valid" && parsed && parsed.ok && viewMode === "tree" && parsed.kind === "xml" && (
+        {status === "valid" && effectiveParsed && effectiveParsed.ok && viewMode === "tree" && effectiveParsed.kind === "xml" && (
           <XmlTree
-            root={parsed.posRoot}
-            rootTag={parsed.rootLabel}
+            root={effectiveParsed.posRoot}
+            rootTag={effectiveParsed.rootLabel}
             collapsedPaths={collapsedPaths}
             onToggle={handleToggleNode}
             showFullPath={showFullPath}
@@ -353,15 +410,18 @@ export default function InspectorPage() {
           />
         )}
 
-        {status === "valid" && parsed && parsed.ok && viewMode === "graph" && (
-          <GraphView data={parsed.value as JsonValue} rootLabel={parsed.rootLabel} onSelectPath={handleSelectPathFromTree} />
+        {status === "valid" && effectiveParsed && effectiveParsed.ok && viewMode === "graph" && (
+          <GraphView
+            data={effectiveParsed.value as JsonValue}
+            rootLabel={effectiveParsed.rootLabel}
+            onSelectPath={handleSelectPathFromTree}
+          />
         )}
 
         {status === "valid" && parsed && parsed.ok && viewMode === "text" && (
           <div className="output-text-wrap">
             <div className="output-text-banner">
-              Showing the result of {outputText === parsed.minified ? "Minify" : "Format"} — Copy/Download reflect
-              this.
+              Showing the result of {outputLabel} — Copy/Download reflect this.
               <button className="btn btn-ghost" onClick={() => setViewMode("tree")}>
                 Back to Tree
               </button>
