@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { usePersistedText } from "./draftsDb";
 import ResizableSplit from "./ResizableSplit";
 import { parsePayload } from "./payloadParser";
 import { collectKeyMatches, collectValueMatches, type KeyMatch, type ValueMatch } from "./jsonPositions";
@@ -48,7 +49,7 @@ function highlight(text: string, query: string) {
 }
 
 export default function SearchPage() {
-  const [raw, setRaw] = useState("");
+  const [raw, setRaw] = usePersistedText("search");
   const [query, setQuery] = useState("");
   const [keyRefine, setKeyRefine] = useState("");
   const [valueRefine, setValueRefine] = useState("");

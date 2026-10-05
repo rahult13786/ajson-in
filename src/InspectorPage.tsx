@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { usePersistedText } from "./draftsDb";
 import JsonTree from "./JsonTree";
 import XmlTree from "./XmlTree";
 import GraphView from "./GraphView";
@@ -12,6 +13,7 @@ import {
   type JsonValue,
 } from "./jsonUtils";
 import { parsePayload } from "./payloadParser";
+import { repairJson, type RepairOutcome } from "./repairUtils";
 import { findNodeAtOffset, findNodeAtPath } from "./jsonPositions";
 import { selectTextareaRange } from "./textNav";
 import { SaveFavoriteModal, FavoritesBrowserModal } from "./FavoritesModal";
@@ -20,7 +22,7 @@ import { CopyIcon, DownloadIcon, CheckIcon, MaximizeIcon, MinimizeIcon, StarIcon
 // "text" has no toolbar button of its own (Tree/Graph are the only selectable views) — it's
 // entered automatically by Format/Minify so their result is actually visible somewhere, since
 // neither ever touches the input and Tree/Graph render structure, not raw formatted text.
-type ViewMode = "tree" | "graph" | "text";
+type ViewMode = "tree" | "graph" | "text" | "repair";
 
 const JSON_SAMPLE = `{
   "id": "evt_3Nk29ALx",
@@ -67,14 +69,83 @@ function deriveFavoriteName(raw: string, kind: string): string {
   return `${kind.toUpperCase()} payload — ${new Date().toLocaleTimeString()}`;
 }
 
+function RepairView({
+  outcome,
+  onApply,
+  onBack,
+}: {
+  outcome: RepairOutcome;
+  onApply: () => void;
+  onBack: () => void;
+}) {
+  if (!outcome.ok) {
+    return (
+      <div className="repair-view">
+        <div className="error-banner">
+          <span className="error-label">Cannot repair</span>
+          <span>
+            {outcome.message}
+            {outcome.line !== null ? ` — line ${outcome.line}, column ${outcome.col}` : ""}
+          </span>
+        </div>
+        <div className="repair-actions">
+          <button className="btn btn-ghost" onClick={onBack}>
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="repair-view">
+      <div className="repair-summary">
+        <span>
+          {outcome.changed
+            ? `Repaired — ${outcome.insertions} insertion${outcome.insertions === 1 ? "" : "s"}, ${outcome.deletions} deletion${
+                outcome.deletions === 1 ? "" : "s"
+              }`
+            : "Nothing to repair — the input is already valid JSON."}
+        </span>
+        <span className="repair-actions">
+          {outcome.changed && (
+            <button className="btn btn-accent" onClick={onApply} title="Replace the input with the repaired text">
+              Apply to input
+            </button>
+          )}
+          <button className="btn btn-ghost" onClick={onBack}>
+            Back to Tree
+          </button>
+        </span>
+      </div>
+      <h3 className="repair-heading">
+        Changes <span className="hint-text">(raw input vs. repaired, before formatting)</span>
+      </h3>
+      <pre className="repair-diff">
+        {outcome.segments.map((seg, i) =>
+          seg.kind === "same" ? (
+            <span key={i}>{seg.text}</span>
+          ) : (
+            <span key={i} className={seg.kind === "add" ? "diff-ins" : "diff-del"}>
+              {seg.text}
+            </span>
+          )
+        )}
+      </pre>
+      <h3 className="repair-heading">Formatted result</h3>
+      <pre className="output-text-block repair-formatted">{outcome.formatted}</pre>
+    </div>
+  );
+}
+
 export default function InspectorPage() {
-  const [raw, setRaw] = useState("");
+  const [raw, setRaw] = usePersistedText("inspector");
   const [outputText, setOutputText] = useState("");
   const [copied, setCopied] = useState(false);
   const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(new Set());
   const [showFullPath, setShowFullPath] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("tree");
   const [outputLabel, setOutputLabel] = useState("Format");
+  const [repairResult, setRepairResult] = useState<RepairOutcome | null>(null);
   const [activePath, setActivePath] = useState<string | null>(null);
   const [rightFullscreen, setRightFullscreen] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -115,6 +186,13 @@ export default function InspectorPage() {
     setOutputText(effectiveParsed.formatted);
     setOutputLabel(isStringifiedInput ? "Format (auto-detected stringified JSON)" : "Format");
   }, [raw]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A repair report describes one specific input, so it's dropped as soon as the input changes
+  // (including after "Apply repair", which replaces the input with the repaired text).
+  useEffect(() => {
+    setRepairResult(null);
+    setViewMode((m) => (m === "repair" ? "tree" : m));
+  }, [raw]);
 
   const stats = useMemo(() => {
     const lines = raw === "" ? 0 : raw.split("\n").length;
@@ -171,8 +249,26 @@ export default function InspectorPage() {
     setViewMode("text");
   }
 
+  /** Repairs the raw input with jsonrepair and shows an inline diff (raw -> repaired) plus the
+   *  separately formatted result. Never touches the input unless "Apply repair" is clicked. */
+  function handleRepair() {
+    if (raw.trim() === "") return;
+    const outcome = repairJson(raw);
+    setRepairResult(outcome);
+    if (outcome.ok) {
+      setOutputText(outcome.formatted);
+      setOutputLabel("Repair");
+    }
+    setViewMode("repair");
+  }
+
+  function handleApplyRepair() {
+    if (repairResult?.ok) setRaw(repairResult.repaired);
+  }
+
   function handleClear() {
     setRaw("");
+    setRepairResult(null);
     setOutputText("");
     setCollapsedPaths(new Set());
     setActivePath(null);
@@ -285,6 +381,14 @@ export default function InspectorPage() {
         >
           Stringify
         </button>
+        <button
+          onClick={handleRepair}
+          className={`btn ${viewMode === "repair" ? "btn-active" : ""}`}
+          disabled={raw.trim() === ""}
+          title="Fix broken JSON (quotes, commas, comments, truncated input…) and show what changed"
+        >
+          Repair
+        </button>
         <span className="toolbar-divider" />
         <div className="view-mode-group">
           <button
@@ -360,7 +464,7 @@ export default function InspectorPage() {
           </div>
         )}
 
-        {status === "invalid" && parsed && !parsed.ok && (
+        {status === "invalid" && viewMode !== "repair" && parsed && !parsed.ok && (
           <div className="error-state">
             <div className="error-banner">
               <span className="error-label">{parsed.kind === "xml" ? "XML error" : "SyntaxError"}</span>
@@ -377,14 +481,32 @@ export default function InspectorPage() {
                 ))}
               </div>
               <div className="code">
-                {raw.split("\n").map((line, i) => (
-                  <div key={i} className={i + 1 === parsed.line ? "code-line err" : "code-line"}>
-                    {line || " "}
-                  </div>
-                ))}
+                {raw.split("\n").map((line, i) => {
+                  if (i + 1 !== parsed.line) {
+                    return (
+                      <div key={i} className="code-line">
+                        {line || " "}
+                      </div>
+                    );
+                  }
+                  // Only the character the parser actually stopped at is marked (columns are
+                  // 1-based); the rest of the line keeps its normal color.
+                  const at = Math.max(0, parsed.col - 1);
+                  return (
+                    <div key={i} className="code-line err">
+                      {line.slice(0, at)}
+                      <span className="err-mark">{line.charAt(at) || " "}</span>
+                      {line.slice(at + 1)}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
+        )}
+
+        {viewMode === "repair" && repairResult && repairResult.source === raw && (
+          <RepairView outcome={repairResult} onApply={handleApplyRepair} onBack={() => setViewMode("tree")} />
         )}
 
         {status === "valid" && effectiveParsed && effectiveParsed.ok && viewMode === "tree" && effectiveParsed.kind === "json" && (

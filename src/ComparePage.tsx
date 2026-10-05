@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { usePersistedText } from "./draftsDb";
 import ResizableSplit from "./ResizableSplit";
 import { parsePayload } from "./payloadParser";
 import { buildCompareRows, buildDiffSummaryLines } from "./compareUtils";
@@ -22,8 +23,8 @@ const JSON_SAMPLE_RIGHT = `{
 }`;
 
 export default function ComparePage() {
-  const [leftRaw, setLeftRaw] = useState("");
-  const [rightRaw, setRightRaw] = useState("");
+  const [leftRaw, setLeftRaw] = usePersistedText("compare-left");
+  const [rightRaw, setRightRaw] = usePersistedText("compare-right");
   const [activeDiffPos, setActiveDiffPos] = useState<number | null>(null);
   const [resultFullscreen, setResultFullscreen] = useState(false);
   const [showBrowseModal, setShowBrowseModal] = useState(false);
