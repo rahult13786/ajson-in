@@ -8,6 +8,7 @@ import {
   byteSize,
   formatBytes,
   collectContainerPaths,
+  buildVisibleTreeText,
   formatPathForKind,
   tryUnwrapJsonString,
   type JsonValue,
@@ -289,9 +290,17 @@ export default function InspectorPage() {
     setViewMode("tree");
   }
 
+  /** In Tree view, once something has been collapsed, Copy mirrors exactly what the tree is
+   *  showing right now — expanded parts in full, collapsed parts as one-line summaries — instead
+   *  of always dumping the whole document. Every other view (and an untouched tree) copies the
+   *  result text as before. */
+  const copiesVisibleTree =
+    viewMode === "tree" && effectiveParsed?.ok === true && effectiveParsed.kind === "json" && collapsedPaths.size > 0;
+
   async function handleCopy() {
-    if (!outputText) return;
-    await navigator.clipboard.writeText(outputText);
+    const text = copiesVisibleTree && effectiveParsed?.ok ? buildVisibleTreeText(effectiveParsed.value as JsonValue, collapsedPaths) : outputText;
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
@@ -424,7 +433,12 @@ export default function InspectorPage() {
           </>
         )}
         <span className="toolbar-divider" />
-        <button onClick={handleCopy} className="btn icon-btn" disabled={!outputText} title="Copy result">
+        <button
+          onClick={handleCopy}
+          className="btn icon-btn"
+          disabled={!outputText}
+          title={copiesVisibleTree ? "Copy what the tree currently shows (collapsed nodes are summarized)" : "Copy result"}
+        >
           {copied ? <CheckIcon /> : <CopyIcon />}
         </button>
         <button onClick={handleDownload} className="btn btn-accent icon-btn" disabled={!outputText} title="Download result">

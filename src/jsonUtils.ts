@@ -118,3 +118,52 @@ export function collectContainerPaths(
   }
   return acc;
 }
+
+/**
+ * Renders a JSON value as text exactly the way the tree view currently shows it: expanded
+ * containers are written out in full (2-space indent, same trailing commas), while a collapsed
+ * container is a one-line summary such as `[ 1 item ]` / `{ 2 keys }`, just like its row in the
+ * tree. Path conventions match JsonTree (`root`, `root[0]`, `root.key`), so `collapsedPaths` can
+ * be passed straight from the tree's state. With nothing collapsed this is ordinary pretty JSON.
+ */
+export function buildVisibleTreeText(value: JsonValue, collapsedPaths: Set<string>): string {
+  const lines: string[] = [];
+
+  function walk(v: JsonValue, path: string, depth: number, keyLabel: string | undefined, isLast: boolean) {
+    const pad = "  ".repeat(depth);
+    const prefix = keyLabel !== undefined ? `${JSON.stringify(keyLabel)}: ` : "";
+    const comma = isLast ? "" : ",";
+
+    if (!isContainer(v)) {
+      lines.push(`${pad}${prefix}${JSON.stringify(v)}${comma}`);
+      return;
+    }
+
+    const isArray = Array.isArray(v);
+    const entries: [string, JsonValue][] = isArray
+      ? (v as JsonValue[]).map((item, i) => [String(i), item])
+      : Object.entries(v as Record<string, JsonValue>);
+    const open = isArray ? "[" : "{";
+    const close = isArray ? "]" : "}";
+
+    if (entries.length === 0) {
+      lines.push(`${pad}${prefix}${open}${close}${comma}`);
+      return;
+    }
+
+    if (collapsedPaths.has(path)) {
+      const noun = isArray ? (entries.length === 1 ? "item" : "items") : entries.length === 1 ? "key" : "keys";
+      lines.push(`${pad}${prefix}${open} ${entries.length} ${noun} ${close}${comma}`);
+      return;
+    }
+
+    lines.push(`${pad}${prefix}${open}`);
+    entries.forEach(([k, child], i) => {
+      walk(child, isArray ? `${path}[${k}]` : `${path}.${k}`, depth + 1, isArray ? undefined : k, i === entries.length - 1);
+    });
+    lines.push(`${pad}${close}${comma}`);
+  }
+
+  walk(value, "root", 0, undefined, true);
+  return lines.join("\n");
+}
