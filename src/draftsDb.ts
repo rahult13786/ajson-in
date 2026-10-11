@@ -43,6 +43,20 @@ async function saveDraft(key: DraftKey, text: string): Promise<void> {
 const SAVE_DEBOUNCE_MS = 250;
 
 /**
+ * Line endings are normalized to "\n" for every paste box, whatever way the text arrives
+ * (typing, paste, "Upload file", a favorite, or a stored draft). A textarea's own value never
+ * contains "\r" — browsers strip it — so a payload held in app state with Windows (CRLF) line
+ * endings has every character offset skewed by one per preceding line relative to what the
+ * textarea reports. That broke click-to-select: the highlight started a few characters late and
+ * spilled onto the next line near the top of a file, and landed nowhere at all (or on the wrong
+ * node) deep into it. Keeping state identical to the textarea's value makes parser offsets and
+ * selection offsets the same thing on every OS and browser.
+ */
+export function normalizeNewlines(text: string): string {
+  return text.indexOf("\r") === -1 ? text : text.replace(/\r\n?/g, "\n");
+}
+
+/**
  * Drop-in replacement for `useState("")` for a paste box: the value is restored from IndexedDB
  * when the page mounts (so switching tabs or reopening the browser brings the last data back)
  * and every change is written back, debounced while typing and flushed immediately when the
@@ -69,8 +83,9 @@ export function usePersistedText(key: DraftKey): [string, (next: string) => void
     loadDraft(key).then((text) => {
       // If the user already typed/loaded something before the stored copy arrived, theirs wins.
       if (cancelled || dirty.current) return;
-      latest.current = text;
-      setValue(text);
+      const normalized = normalizeNewlines(text);
+      latest.current = normalized;
+      setValue(normalized);
     });
     const onHide = () => flush();
     window.addEventListener("pagehide", onHide);
@@ -82,7 +97,8 @@ export function usePersistedText(key: DraftKey): [string, (next: string) => void
   }, [key, flush]);
 
   const update = useCallback(
-    (next: string) => {
+    (raw: string) => {
+      const next = normalizeNewlines(raw);
       latest.current = next;
       dirty.current = true;
       setValue(next);
