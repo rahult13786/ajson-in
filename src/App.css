@@ -800,14 +800,20 @@
 }
 
 .entity-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 6px;
-  padding: 7px 8px 7px 10px;
+  padding: 6px 6px;
+  height: 34px;
+  box-sizing: border-box;
   background: var(--panel-alt);
   border-bottom: 1px solid var(--border-soft);
   flex: 0 0 auto;
+}
+
+.entity-box.is-collapsed .entity-header {
+  border-bottom: none;
 }
 
 .entity-label {
@@ -815,6 +821,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--blue);
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -824,32 +831,54 @@
   color: var(--accent);
 }
 
+.entity-box.is-selectable {
+  cursor: pointer;
+}
+
+.entity-box.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
 .entity-actions {
   display: flex;
-  gap: 3px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
 .entity-action-btn {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1;
   color: var(--text-muted);
   background: transparent;
   border: 1px solid transparent;
   border-radius: 4px;
   width: 20px;
   height: 20px;
+  padding: 0;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.entity-action-btn:hover {
+.entity-action-btn:hover:not(:disabled) {
   color: var(--accent);
   border-color: var(--border);
   background: var(--panel);
+}
+
+.entity-action-btn:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.entity-hidden-badge {
+  position: absolute;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-dim);
+  pointer-events: none;
 }
 
 .entity-fields {

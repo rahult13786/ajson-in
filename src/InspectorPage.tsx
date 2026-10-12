@@ -551,6 +551,7 @@ export default function InspectorPage() {
             data={effectiveParsed.value as JsonValue}
             rootLabel={effectiveParsed.rootLabel}
             onSelectPath={handleSelectPathFromTree}
+            activePath={activePath}
           />
         )}
 

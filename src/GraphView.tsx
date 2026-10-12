@@ -1,7 +1,25 @@
-import { useMemo, useRef, useState, type WheelEvent } from "react";
-import { buildEntityTree, computeGraphLayout, type LayoutBox } from "./graphLayout";
+import { Fragment, useMemo, useRef, useState, type WheelEvent } from "react";
+import {
+  applyBoxAction,
+  buildEntityTree,
+  computeAvailability,
+  computeGraphLayout,
+  EMPTY_VIEW_STATE,
+  type BoxAction,
+  type BoxActionAvailability,
+  type EntityNode,
+  type GraphViewState,
+} from "./graphLayout";
 import type { JsonValue } from "./jsonUtils";
-import { ImageDownloadIcon } from "./icons";
+import {
+  BoxCollapseIcon,
+  BoxExpandIcon,
+  EyeIcon,
+  EyeOffIcon,
+  ImageDownloadIcon,
+  TreeCollapseIcon,
+  TreeExpandIcon,
+} from "./icons";
 import { exportGraphAsPng, type GraphExportTheme } from "./exportGraphCanvas";
 
 const ZOOM_MIN = 0.25;
@@ -9,26 +27,91 @@ const ZOOM_MAX = 2.5;
 const ZOOM_STEP = 0.15;
 const CANVAS_PADDING = 40;
 
+/**
+ * The six per-box controls. Expand-type actions sit on the left of the box name and
+ * collapse-type actions on the right, each group ordered so the single-box action is nearest the
+ * name. `key` ties each control to its entry in `BoxActionAvailability` (its logical-toggle
+ * enabled state).
+ */
+const LEFT_ACTIONS: { action: BoxAction; title: string; icon: JSX.Element }[] = [
+  { action: "expandShow", title: "Expand this box and show its child boxes", icon: <EyeIcon /> },
+  { action: "expandChildren", title: "Expand the whole child hierarchy (every child box expanded)", icon: <TreeExpandIcon /> },
+  { action: "expand", title: "Expand this box", icon: <BoxExpandIcon /> },
+];
+const RIGHT_ACTIONS: { action: BoxAction; title: string; icon: JSX.Element }[] = [
+  { action: "collapse", title: "Collapse this box", icon: <BoxCollapseIcon /> },
+  { action: "collapseChildren", title: "Collapse the whole child hierarchy (child boxes stay visible, collapsed)", icon: <TreeCollapseIcon /> },
+  { action: "collapseHide", title: "Collapse this box and hide its child boxes", icon: <EyeOffIcon /> },
+];
+
+function ActionButtons({
+  node,
+  availability,
+  actions,
+  onAction,
+}: {
+  node: EntityNode;
+  availability: BoxActionAvailability | undefined;
+  actions: typeof LEFT_ACTIONS;
+  onAction: (node: EntityNode, action: BoxAction) => void;
+}) {
+  return (
+    <div className="entity-actions">
+      {actions.map(({ action, title, icon }) => (
+        <button
+          key={action}
+          type="button"
+          className="entity-action-btn"
+          title={title}
+          aria-label={title}
+          disabled={!availability?.[action]}
+          onClick={(e) => {
+            e.stopPropagation(); // don't also count as a click on the box (selection)
+            onAction(node, action);
+          }}
+        >
+          {icon}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function GraphView({
   data,
   rootLabel = "root",
   onSelectPath,
+  activePath = null,
 }: {
   data: JsonValue;
   rootLabel?: string;
+  /** Called with a box's JSON path when the box is clicked (used to highlight it in the input). */
   onSelectPath?: (path: string) => void;
+  /** Path of the currently selected box, drawn with a highlight. */
+  activePath?: string | null;
 }) {
   const [zoom, setZoom] = useState(1);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [view, setView] = useState<GraphViewState>(EMPTY_VIEW_STATE);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  const layout = useMemo(() => {
-    const tree = buildEntityTree(data, "root", rootLabel);
-    return computeGraphLayout(tree);
-  }, [data, rootLabel]);
+  const tree = useMemo(() => buildEntityTree(data, "root", rootLabel), [data, rootLabel]);
+  const layout = useMemo(() => computeGraphLayout(tree, view), [tree, view]);
+  const availability = useMemo(() => computeAvailability(tree, view), [tree, view]);
+  const totalEntities = useMemo(() => {
+    let n = 0;
+    (function count(node: EntityNode) {
+      n++;
+      node.children.forEach(count);
+    })(tree);
+    return n;
+  }, [tree]);
+
+  function handleBoxAction(node: EntityNode, action: BoxAction) {
+    setView((prev) => applyBoxAction(prev, node, action));
+  }
 
   function zoomBy(delta: number) {
     setZoom((z) => Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z + delta)) * 100) / 100);
@@ -38,18 +121,6 @@ export default function GraphView({
     if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     zoomBy(e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP);
-  }
-
-  async function copyEntity(box: LayoutBox) {
-    await navigator.clipboard.writeText(JSON.stringify(box.node.ownData, null, 2));
-    setCopiedId(`own:${box.node.id}`);
-    setTimeout(() => setCopiedId((c) => (c === `own:${box.node.id}` ? null : c)), 1200);
-  }
-
-  async function copySubtree(box: LayoutBox) {
-    await navigator.clipboard.writeText(JSON.stringify(box.node.fullData, null, 2));
-    setCopiedId(`full:${box.node.id}`);
-    setTimeout(() => setCopiedId((c) => (c === `full:${box.node.id}` ? null : c)), 1200);
   }
 
   async function handleExportPng() {
@@ -107,7 +178,11 @@ export default function GraphView({
           {exporting ? "Exporting…" : "Export PNG"}
         </button>
         {exportError && <span className="graph-export-error">{exportError}</span>}
-        <span className="graph-entity-count">{layout.boxes.length} entities</span>
+        <span className="graph-entity-count">
+          {layout.boxes.length === totalEntities
+            ? `${totalEntities} entities`
+            : `${layout.boxes.length} of ${totalEntities} entities shown`}
+        </span>
       </div>
 
       <div className="graph-scroll-wrapper" ref={wrapperRef} onWheel={handleWheel}>
@@ -131,61 +206,57 @@ export default function GraphView({
 
             {layout.boxes.map((box) => {
               const isRoot = box.node.path === "root";
+              const isActive = activePath === box.node.path;
+              const avail = availability.get(box.node.id);
               return (
-                <div
-                  key={box.node.id}
-                  className={`entity-box ${isRoot ? "is-root" : ""}`}
-                  style={{
-                    left: box.x + CANVAS_PADDING,
-                    top: box.y + CANVAS_PADDING,
-                    width: box.width,
-                    height: box.height,
-                  }}
-                >
-                  <div className="entity-header">
-                    <span
-                      className="entity-label"
-                      title={box.node.label}
-                      onClick={() => onSelectPath?.(box.node.path)}
-                      style={{ cursor: onSelectPath ? "pointer" : undefined }}
-                    >
-                      {box.node.label}
-                    </span>
-                    <div className="entity-actions">
-                      <button
-                        type="button"
-                        className="entity-action-btn"
-                        title="Copy this entity's JSON"
-                        onClick={() => copyEntity(box)}
-                      >
-                        {copiedId === `own:${box.node.id}` ? "✓" : "⧉"}
-                      </button>
-                      <button
-                        type="button"
-                        className="entity-action-btn"
-                        title="Copy full JSON (entity + children)"
-                        onClick={() => copySubtree(box)}
-                      >
-                        {copiedId === `full:${box.node.id}` ? "✓" : "⧉⧉"}
-                      </button>
+                <Fragment key={box.node.id}>
+                  <div
+                    className={`entity-box ${isRoot ? "is-root" : ""} ${isActive ? "is-active" : ""} ${
+                      box.collapsed ? "is-collapsed" : ""
+                    } ${onSelectPath ? "is-selectable" : ""}`}
+                    data-path={box.node.path}
+                    onClick={() => onSelectPath?.(box.node.path)}
+                    style={{
+                      left: box.x + CANVAS_PADDING,
+                      top: box.y + CANVAS_PADDING,
+                      width: box.width,
+                      height: box.height,
+                    }}
+                  >
+                    <div className="entity-header">
+                      <ActionButtons node={box.node} availability={avail} actions={LEFT_ACTIONS} onAction={handleBoxAction} />
+                      <span className="entity-label" title={box.node.label}>
+                        {box.node.label}
+                      </span>
+                      <ActionButtons node={box.node} availability={avail} actions={RIGHT_ACTIONS} onAction={handleBoxAction} />
                     </div>
-                  </div>
-                  <div className="entity-fields">
-                    {box.node.fields.length === 0 && (
-                      <div className="entity-field-empty">— nested entities only —</div>
-                    )}
-                    {box.node.fields.map((f) => (
-                      <div className="entity-field" key={f.key}>
-                        <span className="field-key" title={f.key}>
-                          {f.key}
-                        </span>
-                        <span className={`field-value tok-${f.type}`} title={f.display}>
-                          {f.display}
-                        </span>
+                    {!box.collapsed && (
+                      <div className="entity-fields">
+                        {box.node.fields.length === 0 && (
+                          <div className="entity-field-empty">— nested entities only —</div>
+                        )}
+                        {box.node.fields.map((f) => (
+                          <div className="entity-field" key={f.key}>
+                            <span className="field-key" title={f.key}>
+                              {f.key}
+                            </span>
+                            <span className={`field-value tok-${f.type}`} title={f.display}>
+                              {f.display}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
+                  {box.childrenHidden && (
+                    <div
+                      className="entity-hidden-badge"
+                      style={{ left: box.x + CANVAS_PADDING, top: box.y + CANVAS_PADDING + box.height + 6, width: box.width }}
+                    >
+                      ⋯ {box.hiddenCount} child {box.hiddenCount === 1 ? "box" : "boxes"} hidden
+                    </div>
+                  )}
+                </Fragment>
               );
             })}
           </div>

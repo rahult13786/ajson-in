@@ -91,6 +91,22 @@ function drawEdge(ctx: CanvasRenderingContext2D, edge: LayoutEdge, padding: numb
   ctx.stroke();
 }
 
+/** "⋯ N child boxes hidden" caption under a box whose children were hidden (matches the screen). */
+function drawHiddenBadge(ctx: CanvasRenderingContext2D, box: LayoutBox, padding: number, theme: GraphExportTheme) {
+  if (!box.childrenHidden) return;
+  ctx.save();
+  ctx.font = `italic 11px ${theme.fontMono}`;
+  ctx.fillStyle = theme.textDim;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    `⋯ ${box.hiddenCount} child ${box.hiddenCount === 1 ? "box" : "boxes"} hidden`,
+    box.x + padding + box.width / 2,
+    box.y + padding + box.height + 14
+  );
+  ctx.restore();
+}
+
 function drawBox(ctx: CanvasRenderingContext2D, box: LayoutBox, padding: number, theme: GraphExportTheme, isRoot: boolean) {
   const x = box.x + padding;
   const y = box.y + padding;
@@ -121,8 +137,17 @@ function drawBox(ctx: CanvasRenderingContext2D, box: LayoutBox, padding: number,
   ctx.textBaseline = "middle";
   ctx.font = `600 12px ${theme.fontMono}`;
   ctx.fillStyle = isRoot ? theme.accent : theme.blue;
-  const labelMaxWidth = width - FIELD_PAD_X - 10;
-  ctx.fillText(truncateToWidth(ctx, box.node.label, labelMaxWidth), x + 10, y + HEADER_HEIGHT / 2 + 1);
+  const labelMaxWidth = width - FIELD_PAD_X * 2;
+  const labelText = truncateToWidth(ctx, box.node.label, labelMaxWidth);
+  // Centered, like the on-screen header (where the name sits between the two button groups).
+  ctx.textAlign = "center";
+  ctx.fillText(labelText, x + width / 2, y + HEADER_HEIGHT / 2 + 1);
+  ctx.textAlign = "left";
+
+  if (box.collapsed) {
+    drawHiddenBadge(ctx, box, padding, theme);
+    return; // header-only box: no field list
+  }
 
   // Fields (matches .entity-fields / .entity-field / .field-key / .field-value)
   ctx.font = `11.5px ${theme.fontMono}`;
@@ -133,6 +158,7 @@ function drawBox(ctx: CanvasRenderingContext2D, box: LayoutBox, padding: number,
     ctx.font = `italic 11px ${theme.fontMono}`;
     ctx.fillStyle = theme.textDim;
     ctx.fillText("— nested entities only —", x + FIELD_PAD_X, fieldsTop + 6);
+    drawHiddenBadge(ctx, box, padding, theme);
     return;
   }
 
@@ -163,6 +189,7 @@ function drawBox(ctx: CanvasRenderingContext2D, box: LayoutBox, padding: number,
       ctx.setLineDash([]);
     }
   });
+  drawHiddenBadge(ctx, box, padding, theme);
 }
 
 export async function exportGraphAsPng(

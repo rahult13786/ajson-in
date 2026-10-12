@@ -96,3 +96,53 @@ export const ImageDownloadIcon = () => (
     <path d="M21 15l-5-5L5 21" />
   </svg>
 );
+
+/* ---- Graph box controls (smaller, 14px) ---- */
+const small: SVGProps<SVGSVGElement> = { ...base, width: 14, height: 14 };
+
+/** Expand just this box (show its fields). */
+export const BoxExpandIcon = () => (
+  <svg {...small}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+/** Collapse just this box (header only). */
+export const BoxCollapseIcon = () => (
+  <svg {...small}>
+    <path d="m6 15 6-6 6 6" />
+  </svg>
+);
+
+/** Expand every child box beneath this one. */
+export const TreeExpandIcon = () => (
+  <svg {...small}>
+    <path d="m7 5 5 5 5-5" />
+    <path d="m7 13 5 5 5-5" />
+  </svg>
+);
+
+/** Collapse every child box beneath this one (they stay visible, collapsed). */
+export const TreeCollapseIcon = () => (
+  <svg {...small}>
+    <path d="m7 11 5-5 5 5" />
+    <path d="m7 19 5-5 5 5" />
+  </svg>
+);
+
+/** Show this box's child boxes. */
+export const EyeIcon = () => (
+  <svg {...small}>
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+/** Hide this box's child boxes from the diagram. */
+export const EyeOffIcon = () => (
+  <svg {...small}>
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+    <circle cx="12" cy="12" r="3" />
+    <path d="m3 3 18 18" />
+  </svg>
+);
