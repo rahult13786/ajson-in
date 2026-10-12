@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import "./App.css";
 import Sidebar, { type PageId, type Theme } from "./Sidebar";
 import InspectorPage from "./InspectorPage";
@@ -33,6 +34,7 @@ export default function App() {
         {page === "search" && <SearchPage />}
         {page === "swagger" && <SwaggerPage />}
       </main>
+      <Analytics />
     </div>
   );
 }

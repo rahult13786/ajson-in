@@ -1,7 +1,7 @@
 {
   "name": "json-payload-viewer",
   "private": true,
-  "version": "0.2.0",
+  "version": "13.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@types/js-yaml": "^4.0.9",
+    "@vercel/analytics": "^2.0.1",
     "dexie": "^4.4.6",
     "diff": "^9.0.0",
     "js-yaml": "^5.4.2",
