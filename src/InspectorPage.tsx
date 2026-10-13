@@ -1,3 +1,4 @@
+import { onExample } from "./exampleBus";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { usePersistedText } from "./draftsDb";
 import JsonTree from "./JsonTree";
@@ -138,7 +139,7 @@ function RepairView({
   );
 }
 
-export default function InspectorPage() {
+export default function InspectorPage({ initialView = null }: { initialView?: "graph" | null }) {
   const [raw, setRaw] = usePersistedText("inspector");
   const [outputText, setOutputText] = useState("");
   const [copied, setCopied] = useState(false);
@@ -194,6 +195,36 @@ export default function InspectorPage() {
     setRepairResult(null);
     setViewMode((m) => (m === "repair" ? "tree" : m));
   }, [raw]);
+
+  // Landing routes such as /json-graph open straight into their view.
+  useEffect(() => {
+    if (initialView) setViewMode(initialView);
+  }, [initialView]);
+
+  // "Try this example" buttons in the landing sections: load the sample, then run the requested
+  // action once the new input has been parsed (the effect below runs after the input-reset
+  // effects above, so their view resets can't undo it).
+  const pendingExample = useRef<{ text: string; action: "tree" | "minify" | "repair" | "graph" } | null>(null);
+  useEffect(
+    () =>
+      onExample("inspect", (req) => {
+        if (!req.sample) return;
+        pendingExample.current = { text: req.sample, action: req.action ?? "tree" };
+        setRaw(req.sample);
+        setCollapsedPaths(new Set());
+        setActivePath(null);
+      }),
+    [setRaw]
+  );
+  useEffect(() => {
+    const p = pendingExample.current;
+    if (!p || raw !== p.text) return;
+    pendingExample.current = null;
+    if (p.action === "repair") handleRepair();
+    else if (p.action === "minify") handleMinify();
+    else if (p.action === "graph") setViewMode("graph");
+    else setViewMode("tree");
+  }, [raw]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = useMemo(() => {
     const lines = raw === "" ? 0 : raw.split("\n").length;

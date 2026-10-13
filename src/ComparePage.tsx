@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { onExample } from "./exampleBus";
+import { useEffect, useMemo, useState } from "react";
 import { usePersistedText } from "./draftsDb";
 import ResizableSplit from "./ResizableSplit";
 import { parsePayload } from "./payloadParser";
@@ -28,6 +29,17 @@ export default function ComparePage() {
   const [activeDiffPos, setActiveDiffPos] = useState<number | null>(null);
   const [resultFullscreen, setResultFullscreen] = useState(false);
   const [showBrowseModal, setShowBrowseModal] = useState(false);
+
+  useEffect(
+    () =>
+      onExample("compare", (req) => {
+        if (req.left === undefined || req.right === undefined) return;
+        setLeftRaw(req.left);
+        setRightRaw(req.right);
+        setActiveDiffPos(null);
+      }),
+    [setLeftRaw, setRightRaw]
+  );
 
   const parsedLeft = useMemo(() => (leftRaw.trim() === "" ? null : parsePayload(leftRaw)), [leftRaw]);
   const parsedRight = useMemo(() => (rightRaw.trim() === "" ? null : parsePayload(rightRaw)), [rightRaw]);

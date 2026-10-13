@@ -116,3 +116,16 @@ preserving the `<?xml ...?>` declaration, the XML tree rendering real tags,
 the XML graph's root label, the Dexie favorites save/browse/evict flow, the
 Compare page's added vertical divider, and the Search page's row layout and
 corrected sub-filter semantics — not just `tsc -b`/`vite build` passing.
+
+## SEO landing pages (v14.01)
+
+Five crawlable routes share the one tool UI, each with its own title, H1, intro copy, FAQ,
+examples and descriptive internal links: `/json-formatter`, `/json-repair`, `/json-compare`,
+`/json-search`, `/json-graph`. `npm run build` runs `scripts/prerender.mjs` after Vite, which writes a
+static `dist/<route>/index.html` for each (title, meta description, canonical, Open Graph, JSON-LD
+`WebApplication` + `FAQPage`, and the full copy inside `#root`), plus `sitemap.xml` and `robots.txt`.
+
+- Copy lives in `src/seo/pages.json`; the production domain is `src/seo/site.json` (or set the
+  `SITE_URL` env var at build time).
+- Vercel: `vercel.json` enables clean URLs. Other hosts (OpenShift/nginx) need directory-index
+  routing, e.g. `try_files $uri $uri/index.html /index.html;`.

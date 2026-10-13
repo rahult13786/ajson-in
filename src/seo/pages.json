@@ -1,0 +1,367 @@
+{
+  "json-formatter": {
+    "slug": "json-formatter",
+    "page": "inspect",
+    "view": null,
+    "navLabel": "JSON Formatter",
+    "title": "JSON Formatter Online – Format, Validate, Repair, Minify & Tree View | AJSON",
+    "description": "Free online JSON formatter and validator: beautify and pretty print JSON, minify it, repair syntax errors, explore it as a tree or graph, and upload files. Runs in your browser – your data is never uploaded.",
+    "h1": "JSON Formatter Online",
+    "tagline": "Format, validate, repair, minify and explore JSON in your browser.",
+    "intro": [
+      "Paste or upload your JSON and this JSON formatter will beautify it into clean, indented, readable text in one click. It doubles as a JSON validator: if the input has a syntax error you see the exact line and column, and the Repair button can fix common mistakes for you.",
+      "Everything is browser-based. Your JSON is parsed on your own device, so API responses, config files and payloads containing private data are never sent to a server. Switch between the formatted text, a collapsible tree view and a graph view, or minify the JSON when you need the smallest possible payload."
+    ],
+    "featuresTitle": "What the JSON formatter can do",
+    "features": [
+      "Beautify and pretty print JSON with consistent two-space indentation",
+      "Validate JSON and pinpoint syntax errors by line and column",
+      "Minify JSON to remove whitespace for APIs, configs and URLs",
+      "Tree view with expand and collapse for large, deeply nested JSON",
+      "Graph view that draws objects and arrays as connected boxes",
+      "File upload for .json and .xml files, or just paste",
+      "Repair invalid JSON: quotes, trailing commas, comments, truncated input",
+      "Stringify JSON into an escaped string, and auto-detect stringified JSON",
+      "Also formats and explores XML payloads"
+    ],
+    "howTitle": "How to format JSON online",
+    "how": [
+      "Paste your JSON into the input box, or choose a file with Upload file.",
+      "Click Format to beautify it, or Minify to compress it.",
+      "Use Tree or Graph view to explore nested objects and arrays; click a node to highlight it in the input.",
+      "If a syntax error is reported, press Repair to see a before/after of the fix, then Apply to input."
+    ],
+    "examples": [
+      {
+        "title": "Pretty print a minified API response",
+        "text": "A one-line API response is hard to read. Load it, and the formatter beautifies it into an indented tree.",
+        "sample": "{\"id\":101,\"name\":\"Ada Lovelace\",\"roles\":[\"admin\",\"editor\"],\"active\":true,\"address\":{\"city\":\"London\",\"zip\":\"EC1A\"}}",
+        "action": "tree"
+      },
+      {
+        "title": "Minify formatted JSON",
+        "text": "Remove every unnecessary space and line break to get the smallest valid JSON.",
+        "sample": "{\n  \"service\": \"billing\",\n  \"retries\": 3,\n  \"endpoints\": [\n    \"/invoices\",\n    \"/payments\"\n  ]\n}",
+        "action": "minify"
+      },
+      {
+        "title": "Format an XML payload",
+        "text": "The same tool also parses XML and shows it as a navigable tree.",
+        "sample": "<order id=\"7\"><customer>Ada</customer><item sku=\"A1\" qty=\"2\"/><item sku=\"B9\" qty=\"1\"/></order>",
+        "action": "tree"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do I format JSON online?",
+        "a": "Paste your JSON into the input box and click Format. The tool beautifies it with indentation and line breaks, and shows it as text, a tree or a graph."
+      },
+      {
+        "q": "Is this JSON formatter and validator free and private?",
+        "a": "Yes. It is free, and it is entirely browser-based: your JSON is parsed on your own device and is never uploaded to a server."
+      },
+      {
+        "q": "What is the difference between beautify, pretty print and minify?",
+        "a": "Beautify and pretty print mean the same thing: adding indentation and line breaks so JSON is easy to read. Minify does the opposite and strips all optional whitespace to make the JSON as small as possible."
+      },
+      {
+        "q": "How do I find a syntax error in my JSON?",
+        "a": "When the input is not valid JSON, the status bar shows the error message with its line and column and the faulty spot is highlighted in the input. You can also press Repair to fix common problems automatically."
+      },
+      {
+        "q": "Can I upload a JSON file?",
+        "a": "Yes. Use Upload file to open a .json or .xml file from your device. The file is read locally by your browser."
+      }
+    ],
+    "related": [
+      { "slug": "json-repair", "anchor": "Repair invalid JSON" },
+      { "slug": "json-compare", "anchor": "Compare two JSON files" },
+      { "slug": "json-search", "anchor": "Search keys and values in JSON" },
+      { "slug": "json-graph", "anchor": "Visualize JSON as a graph" }
+    ]
+  },
+
+  "json-repair": {
+    "slug": "json-repair",
+    "page": "inspect",
+    "view": null,
+    "navLabel": "JSON Repair",
+    "title": "JSON Repair Online – Fix Invalid JSON & Syntax Errors Instantly | AJSON",
+    "description": "Repair invalid JSON online: fix single quotes, unquoted keys, trailing commas, comments, Python literals and truncated JSON, with a clear before/after diff. Runs in your browser – nothing is uploaded.",
+    "h1": "Repair Invalid JSON Online",
+    "tagline": "Fix broken JSON and see exactly what changed.",
+    "intro": [
+      "Copied JSON from a log, a chat message or a JavaScript object and now it will not parse? Paste it here and press Repair. The tool fixes common JSON syntax errors and shows the original next to the repaired text, with every inserted and removed character highlighted.",
+      "Repair runs in your browser, so the broken payload never leaves your device. When you are happy with the result, apply it to the input and carry on with the JSON formatter, tree view or graph view."
+    ],
+    "featuresTitle": "Syntax errors the JSON repair tool fixes",
+    "features": [
+      "Single quotes and unquoted keys converted to valid double-quoted JSON",
+      "Trailing commas and missing commas",
+      "JavaScript and Python literals such as None, True, False and undefined",
+      "Comments (// and /* */) removed",
+      "Truncated JSON with missing closing brackets, braces or quotes",
+      "Green and red highlighting of every inserted and removed character",
+      "Pretty printed result shown separately from the raw before/after diff",
+      "Apply the repaired text back to the input in one click"
+    ],
+    "howTitle": "How to repair broken JSON",
+    "how": [
+      "Paste the invalid JSON into the input box.",
+      "Click Repair to see the repaired JSON and a highlighted list of changes.",
+      "Review the diff, then click Apply to input to replace your text with the fixed JSON.",
+      "Use Format, Tree or Graph to keep working with the repaired data."
+    ],
+    "examples": [
+      {
+        "title": "Fix single quotes, unquoted keys and trailing commas",
+        "text": "A JavaScript-style object is not valid JSON. Repair turns it into strict JSON.",
+        "sample": "{name: 'Ada', roles: ['admin', 'editor',], active: True,}",
+        "action": "repair"
+      },
+      {
+        "title": "Complete truncated JSON",
+        "text": "Output cut off in the middle? Repair closes the open strings, arrays and objects.",
+        "sample": "{\"user\": {\"id\": 7, \"tags\": [\"a\", \"b\"",
+        "action": "repair"
+      },
+      {
+        "title": "Strip comments from JSON",
+        "text": "JSON does not allow comments. Repair removes them and keeps the data.",
+        "sample": "{\n  // service settings\n  \"port\": 8080, /* default */\n  \"debug\": false\n}",
+        "action": "repair"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do I fix invalid JSON?",
+        "a": "Paste it into the input box and click Repair. The tool corrects common syntax errors such as single quotes, trailing commas, comments and missing brackets, then shows what it changed."
+      },
+      {
+        "q": "What does the Repair button actually change?",
+        "a": "It changes only what is needed to make the text valid JSON. Inserted characters are highlighted in green and removed characters in red, so you can check every change before applying it."
+      },
+      {
+        "q": "Why is my JSON invalid?",
+        "a": "The most common causes are single quotes instead of double quotes, trailing commas, unquoted keys, comments, and text that was cut off. The validator reports the line and column of the first syntax error."
+      },
+      {
+        "q": "Is my broken JSON sent to a server?",
+        "a": "No. Repair runs entirely in your browser, so confidential payloads stay on your device."
+      }
+    ],
+    "related": [
+      { "slug": "json-formatter", "anchor": "Format and validate JSON online" },
+      { "slug": "json-compare", "anchor": "Compare two JSON files" },
+      { "slug": "json-search", "anchor": "Search keys and values in JSON" },
+      { "slug": "json-graph", "anchor": "Visualize JSON as a graph" }
+    ]
+  },
+
+  "json-compare": {
+    "slug": "json-compare",
+    "page": "compare",
+    "view": null,
+    "navLabel": "JSON Compare",
+    "title": "JSON Compare Online – Diff Two JSON Files Side by Side | AJSON",
+    "description": "Compare two JSON files online: a side-by-side JSON diff that aligns keys, highlights added, removed and changed values, and lets you jump between differences. Browser-based – nothing is uploaded.",
+    "h1": "JSON Compare Online – Diff Two JSON Files",
+    "tagline": "Find added, removed and changed values between two JSON documents.",
+    "intro": [
+      "Paste two JSON documents, or upload two files, and this JSON compare tool shows a side-by-side diff. Keys are sorted and aligned, so the same property always sits on the same row even when the key order differs, and missing keys are shown as blank rows.",
+      "Differences are highlighted as additions, removals and changed values, with a counter and next / previous navigation so you can step through every change. It is a browser-based JSON diff: neither file is ever uploaded."
+    ],
+    "featuresTitle": "What the JSON diff tool can do",
+    "features": [
+      "Side-by-side JSON diff with aligned, alphabetically sorted keys",
+      "Highlights added, removed and changed values",
+      "Collapsible trees for large JSON files",
+      "Jump from difference to difference with next and previous",
+      "Works with JSON and XML payloads",
+      "Paste text, upload files, or load saved favorites",
+      "Syntax errors reported per side, so you know which file is invalid",
+      "Browser-based: both documents stay on your device"
+    ],
+    "howTitle": "How to compare two JSON files",
+    "how": [
+      "Paste the first JSON into the left box and the second into the right box, or upload a file for each.",
+      "The diff appears automatically, with differences highlighted.",
+      "Use the next and previous controls to step through each difference.",
+      "Collapse unchanged branches to focus on what changed."
+    ],
+    "examples": [
+      {
+        "title": "Compare two versions of a config",
+        "text": "See which settings were changed, added or removed between releases.",
+        "left": "{\"name\":\"app\",\"version\":\"1.0.0\",\"features\":{\"search\":true,\"export\":false},\"ports\":[80,443]}",
+        "right": "{\"name\":\"app\",\"version\":\"1.1.0\",\"features\":{\"search\":true,\"export\":true,\"graph\":true},\"ports\":[80,443,8443]}"
+      },
+      {
+        "title": "Same data, different key order",
+        "text": "Keys are sorted and aligned, so reordered properties line up and only real differences stand out.",
+        "left": "{\"id\":1,\"email\":\"ada@example.com\",\"role\":\"admin\"}",
+        "right": "{\"role\":\"editor\",\"email\":\"ada@example.com\",\"id\":1}"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do I compare two JSON files online?",
+        "a": "Paste the first JSON into the left box and the second into the right box, or upload one file on each side. The JSON diff is shown immediately, with additions, removals and changes highlighted."
+      },
+      {
+        "q": "Does the order of keys matter in the comparison?",
+        "a": "No. Keys are sorted alphabetically and aligned on the same row, so objects with the same data in a different key order line up and only real differences are marked."
+      },
+      {
+        "q": "Can I compare large JSON files?",
+        "a": "Yes. The result is a collapsible tree, so you can fold unchanged parts away and jump straight between differences."
+      },
+      {
+        "q": "Are my JSON files uploaded anywhere?",
+        "a": "No. The comparison is done in your browser. Neither document is sent to a server."
+      }
+    ],
+    "related": [
+      { "slug": "json-formatter", "anchor": "Format and validate JSON online" },
+      { "slug": "json-repair", "anchor": "Repair invalid JSON before comparing" },
+      { "slug": "json-search", "anchor": "Search keys and values in JSON" },
+      { "slug": "json-graph", "anchor": "Visualize JSON as a graph" }
+    ]
+  },
+
+  "json-search": {
+    "slug": "json-search",
+    "page": "search",
+    "view": null,
+    "navLabel": "JSON Search",
+    "title": "JSON Search Online – Find Keys, Values & Paths in JSON | AJSON",
+    "description": "Search JSON online: find any key or value in a large JSON or XML document, filter results by key or value, copy the exact path, and click a result to jump to it in the source. Browser-based.",
+    "h1": "JSON Search Online – Find Keys, Values and Paths",
+    "tagline": "Search a JSON document by key or value and jump straight to the match.",
+    "intro": [
+      "Looking for one field in a huge API response? Paste or upload your JSON and type a search term. The JSON search tool lists every matching key and every matching value, shows the full path to each match, and highlights it in the source when you click a result.",
+      "Narrow the results with the key and value filters, copy a path in one click, and keep the document in your browser: the search runs locally, so nothing is uploaded."
+    ],
+    "featuresTitle": "What the JSON search tool can do",
+    "features": [
+      "Search keys and values at the same time, case-insensitively",
+      "Refine results with a key filter and a value filter",
+      "See the full JSON path of every match",
+      "Click a result to highlight it in the input",
+      "Copy a path to the clipboard",
+      "Works with JSON and XML payloads",
+      "File upload and saved favorites",
+      "Browser-based: your data stays on your device"
+    ],
+    "howTitle": "How to search inside JSON",
+    "how": [
+      "Paste your JSON into the input box, or upload a file.",
+      "Type a key name or value into the search box.",
+      "Optionally narrow the list with the filter by key and filter by value fields.",
+      "Click a result to jump to it in the source, or copy its path."
+    ],
+    "examples": [
+      {
+        "title": "Find every email in a response",
+        "text": "Search for a key name to list all of its occurrences with their paths.",
+        "sample": "{\"users\":[{\"id\":1,\"email\":\"ada@example.com\",\"role\":\"admin\"},{\"id\":2,\"email\":\"lin@example.com\",\"role\":\"editor\"}],\"meta\":{\"total\":2}}",
+        "query": "email"
+      },
+      {
+        "title": "Find where a value is used",
+        "text": "Search for a value such as admin to see which keys hold it.",
+        "sample": "{\"users\":[{\"id\":1,\"email\":\"ada@example.com\",\"role\":\"admin\"},{\"id\":2,\"email\":\"lin@example.com\",\"role\":\"editor\"}],\"meta\":{\"total\":2}}",
+        "query": "admin"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do I search for a key or value in JSON?",
+        "a": "Paste your JSON, then type the key or value into the search box. Matching keys and values are listed with their full paths, and clicking one highlights it in the source."
+      },
+      {
+        "q": "Can I get the JSON path of a match?",
+        "a": "Yes. Every result shows its path, and you can copy it to the clipboard."
+      },
+      {
+        "q": "Can I search XML as well as JSON?",
+        "a": "Yes. XML payloads are supported and searched the same way."
+      },
+      {
+        "q": "Is the search done on a server?",
+        "a": "No. Searching happens in your browser, so your data is never uploaded."
+      }
+    ],
+    "related": [
+      { "slug": "json-formatter", "anchor": "Format and validate JSON online" },
+      { "slug": "json-repair", "anchor": "Repair invalid JSON" },
+      { "slug": "json-compare", "anchor": "Compare two JSON files" },
+      { "slug": "json-graph", "anchor": "Visualize JSON as a graph" }
+    ]
+  },
+
+  "json-graph": {
+    "slug": "json-graph",
+    "page": "inspect",
+    "view": "graph",
+    "navLabel": "JSON Graph Viewer",
+    "title": "JSON Graph Viewer Online – Visualize JSON as Connected Boxes | AJSON",
+    "description": "Visualize JSON online as a zoomable graph of connected boxes. Expand and collapse objects and arrays, hide branches, click a box to highlight it in the source, and export a PNG. Browser-based.",
+    "h1": "JSON Graph Viewer – Visualize JSON Online",
+    "tagline": "See the structure of any JSON as a graph of connected boxes.",
+    "intro": [
+      "A JSON visualizer turns a wall of nested braces into a picture. Paste your JSON and switch to the graph view: every object and array becomes a box, children are connected to their parents, and you can zoom and pan around even very large documents.",
+      "Each box has controls to collapse or expand itself, collapse or expand its whole hierarchy, or hide its children entirely. Click a box to highlight the matching object or array in the source, and export the diagram as a PNG. It all runs in your browser."
+    ],
+    "featuresTitle": "What the JSON graph view can do",
+    "features": [
+      "Objects and arrays drawn as connected boxes",
+      "Collapse or expand a single box",
+      "Collapse or expand a whole child hierarchy",
+      "Hide or show the children of a box to keep large graphs small",
+      "Click a box to highlight it in the JSON source",
+      "Zoom and pan, and export the graph as a PNG",
+      "Switch to tree view or formatted text at any time",
+      "Browser-based: the diagram is drawn locally"
+    ],
+    "howTitle": "How to visualize JSON as a graph",
+    "how": [
+      "Paste your JSON into the input box, or upload a file.",
+      "Open Graph view to draw the structure.",
+      "Use the buttons in each box header to collapse, expand or hide its children.",
+      "Click a box to find it in the source, or export the PNG to share the structure."
+    ],
+    "examples": [
+      {
+        "title": "Visualize nested teams and members",
+        "text": "A company with teams and members becomes a tree of connected boxes.",
+        "sample": "{\"company\":{\"name\":\"Acme\",\"teams\":[{\"name\":\"Platform\",\"members\":[{\"id\":1,\"name\":\"Ada\"},{\"id\":2,\"name\":\"Lin\"}]},{\"name\":\"Data\",\"members\":[{\"id\":3,\"name\":\"Sam\"}]}]}}",
+        "action": "graph"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do I visualize JSON?",
+        "a": "Paste your JSON into the input box and open Graph view. Each object and array is drawn as a box and linked to its parent."
+      },
+      {
+        "q": "How do I deal with a very large JSON graph?",
+        "a": "Collapse boxes, or use hide children on a branch you do not need. Hidden branches are left out of the drawing entirely, which keeps big documents responsive."
+      },
+      {
+        "q": "Can I save the graph as an image?",
+        "a": "Yes. Export PNG saves the graph as it is currently shown, including collapsed and hidden boxes."
+      },
+      {
+        "q": "Is my JSON sent anywhere to draw the graph?",
+        "a": "No. The graph is computed and drawn in your browser."
+      }
+    ],
+    "related": [
+      { "slug": "json-formatter", "anchor": "Format and validate JSON online" },
+      { "slug": "json-repair", "anchor": "Repair invalid JSON" },
+      { "slug": "json-compare", "anchor": "Compare two JSON files" },
+      { "slug": "json-search", "anchor": "Search keys and values in JSON" }
+    ]
+  }
+}

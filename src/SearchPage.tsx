@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { onExample } from "./exampleBus";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePersistedText } from "./draftsDb";
 import ResizableSplit from "./ResizableSplit";
 import { parsePayload } from "./payloadParser";
@@ -59,6 +60,19 @@ export default function SearchPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pressTimer = useRef<number | null>(null);
   const longPressFired = useRef(false);
+
+  useEffect(
+    () =>
+      onExample("search", (req) => {
+        if (!req.sample) return;
+        setRaw(req.sample);
+        setQuery(req.query ?? "");
+        setKeyRefine("");
+        setValueRefine("");
+        setActivePath(null);
+      }),
+    [setRaw]
+  );
 
   const parsed = useMemo(() => (raw.trim() === "" ? null : parsePayload(raw)), [raw]);
 

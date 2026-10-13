@@ -10,6 +10,169 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+}
+
+/* The tool keeps the full viewport height it always had; the SEO content scrolls in below it. */
+.tool-stage {
+  flex: 0 0 auto;
+  height: 100vh;
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tool-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.seo-hero {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--panel-alt);
+}
+
+.seo-h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.seo-tagline {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seo-content {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  padding: 36px 28px 56px;
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+.seo-content h2 {
+  margin: 30px 0 10px;
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.seo-content h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.seo-content p {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+}
+
+.seo-list {
+  margin: 0;
+  padding-left: 22px;
+  color: var(--text-muted);
+}
+
+.seo-list li {
+  margin-bottom: 5px;
+}
+
+.seo-content a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.seo-content a:hover {
+  text-decoration: underline;
+}
+
+.seo-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.seo-example {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.seo-example p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.seo-code {
+  margin: 4px 0;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 130px;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--panel-alt);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.seo-faq {
+  border-bottom: 1px solid var(--border-soft);
+  padding: 8px 0;
+}
+
+.seo-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.seo-faq p {
+  margin: 8px 0 2px;
+}
+
+.seo-links {
+  list-style: disc;
+}
+
+.seo-allTools {
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.sidebar-nav-btn {
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 /* ---------- Sidebar ---------- */
@@ -1483,6 +1646,21 @@
 @media (max-width: 860px) {
   .app-shell {
     flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .tool-stage {
+    height: auto;
+    min-height: 640px;
+  }
+
+  .seo-tagline {
+    display: none;
+  }
+
+  .seo-content {
+    padding: 24px 16px 40px;
   }
 
   .sidebar {

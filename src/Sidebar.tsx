@@ -1,16 +1,17 @@
 import { SunIcon, MoonIcon } from "./icons";
 
-export type PageId = "inspect" | "compare" | "search" | "swagger";
+import type { PageId } from "./seo/routes";
+export type { PageId };
 export type Theme = "dark" | "light";
 
 // The Swagger page ("swagger") is intentionally left out of this nav list — it's hidden from
 // the UI while more work is pending on it, but it stays a fully valid PageId and App.tsx still
 // routes to it, so the page itself is untouched and reachable again the moment it's added back
 // here.
-const NAV_ITEMS: { id: PageId; label: string; glyph: string }[] = [
-  { id: "inspect", label: "Formatter", glyph: "{}" },
-  { id: "compare", label: "Compare", glyph: "⇄" },
-  { id: "search", label: "Search", glyph: "⌕" },
+const NAV_ITEMS: { id: PageId; slug: string; label: string; glyph: string }[] = [
+  { id: "inspect", slug: "json-formatter", label: "Formatter", glyph: "{}" },
+  { id: "compare", slug: "json-compare", label: "Compare", glyph: "⇄" },
+  { id: "search", slug: "json-search", label: "Search", glyph: "⌕" },
 ];
 
 export default function Sidebar({
@@ -20,7 +21,7 @@ export default function Sidebar({
   onThemeChange,
 }: {
   page: PageId;
-  onNavigate: (p: PageId) => void;
+  onNavigate: (slug: string) => void;
   theme: Theme;
   onThemeChange: (t: Theme) => void;
 }) {
@@ -28,21 +29,26 @@ export default function Sidebar({
     <aside className="sidebar">
       <div className="sidebar-brand">
         <span className="brand-mark">{"{ }"}</span>
-        <span className="brand-name">Payload Inspector</span>
+        <span className="brand-name">AJSON</span>
       </div>
 
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item) => (
-          <button
+          <a
             key={item.id}
+            href={`/${item.slug}`}
             className={`sidebar-nav-btn ${page === item.id ? "active" : ""}`}
-            onClick={() => onNavigate(item.id)}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+              e.preventDefault();
+              onNavigate(item.slug);
+            }}
           >
             <span className="sidebar-nav-glyph" aria-hidden="true">
               {item.glyph}
             </span>
             <span className="sidebar-nav-label">{item.label}</span>
-          </button>
+          </a>
         ))}
       </nav>
 
