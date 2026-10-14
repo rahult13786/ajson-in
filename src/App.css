@@ -2038,3 +2038,40 @@
 :root[data-theme="light"] .diff-ins {
   background: rgba(46, 204, 113, 0.4);
 }
+
+/* ---------- Sidebar feedback ---------- */
+
+.sidebar-feedback {
+  margin-top: 12px;
+  padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-feedback-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.sidebar-feedback-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.sidebar-feedback-link:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 860px) {
+  .sidebar-feedback-label {
+    display: none;
+  }
+}
